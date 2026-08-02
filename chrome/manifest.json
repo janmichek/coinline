@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "CoinFlick",
+  "short_name": "CoinFlick",
+  "version": "1.0.0",
+  "description": "Inline crypto value converter — select any number on a page and flick it into crypto. Live rates for fiat and top coins.",
+  "permissions": ["tabs", "storage"],
+  "host_permissions": [
+    "https://api.coingecko.com/*",
+    "https://api.exchangerate-api.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_title": "CoinFlick: OFF — click to enable",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

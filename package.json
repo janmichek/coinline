@@ -1,0 +1,6 @@
+{
+  "name": "coinflick",
+  "version": "1.0.0",
+  "description": "Inline crypto value converter",
+  "private": true
+}
