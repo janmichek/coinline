@@ -30,18 +30,13 @@ browser.storage.local.get('calcActive').then((r) => {
   if (r.calcActive === undefined) browser.storage.local.set({ calcActive: false });
 });
 
-browser.browserAction.onClicked.addListener(async () => {
+browser.action.onClicked.addListener(async () => {
   const { calcActive } = await browser.storage.local.get('calcActive');
   const next = !calcActive;
   await browser.storage.local.set({ calcActive: next });
-  browser.browserAction.setBadgeText({ text: next ? 'ON' : '' });
-  browser.browserAction.setBadgeBackgroundColor({ color: '#00ff88' });
-  browser.browserAction.setTitle({ title: next ? 'CoinFlick: ON — click to disable' : 'CoinFlick: OFF — click to enable' });
+  browser.action.setBadgeText({ text: next ? 'ON' : '' });
+  browser.action.setBadgeBackgroundColor({ color: '#00ff88' });
+  browser.action.setTitle({ title: next ? 'CoinFlick: ON — click to disable' : 'CoinFlick: OFF — click to enable' });
 
   if (next) await fetchPrices();
-
-  const tabs = await browser.tabs.query({});
-  for (const tab of tabs) {
-    browser.tabs.sendMessage(tab.id, { type: 'toggle', isActive: next }).catch(() => {});
-  }
 });

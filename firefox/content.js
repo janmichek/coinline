@@ -19,8 +19,9 @@ function getTheme() {
   if (calcActive) setActive(true);
 })();
 
-browser.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'toggle') setActive(msg.isActive);
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes.calcActive) return;
+  setActive(!!changes.calcActive.newValue);
 });
 
 function setActive(state) {
@@ -38,6 +39,12 @@ document.addEventListener('mouseup', async (e) => {
   const text = sel.toString().trim();
   if (!text || text.length > 50) return;
 
+  // Clone before await — focus/async work would otherwise drop the selection
+  const savedRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+  const rect = savedRange ? savedRange.getBoundingClientRect() : null;
+  const x = rect ? rect.right + 8 : e.clientX + 14;
+  const y = rect ? rect.top : e.clientY + 14;
+
   const { cryptoList, fxRates } = await browser.storage.local.get(['cryptoList', 'fxRates']);
   if (!cryptoList || !fxRates) return;
 
@@ -45,11 +52,7 @@ document.addEventListener('mouseup', async (e) => {
   if (!parsed) return;
   if (Math.abs(parsed.value) > 1e12) return;
 
-  const rect = sel.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : null;
-  const x = rect ? rect.right + 8 : e.clientX + 14;
-  const y = rect ? rect.top : e.clientY + 14;
-
-  showPopup(x, y, parsed, cryptoList, fxRates);
+  showPopup(x, y, parsed, cryptoList, fxRates, savedRange);
 });
 
 const CURRENCY_SYMBOLS = { '$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY' };
@@ -118,7 +121,16 @@ function fallbackCopy(text) {
   ta.remove();
 }
 
-function showPopup(x, y, parsed, cryptoList, fxRates) {
+function restoreSelection(range) {
+  if (!range) return;
+  try {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch (_) {}
+}
+
+function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
   if (popupEl) popupEl.remove();
 
   const theme = getTheme();
@@ -132,16 +144,16 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
   popupEl.setAttribute('data-bwignore', 'true');
   popupEl.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;min-height:0">
-      <span style="font:12px monospace;color:${theme.muted};line-height:1.2">${fmtVal} ${parsed.currency}</span>
-      <button id="calc-ext-close" style="display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:${theme.muted};cursor:pointer;font:20px/1 monospace;width:16px;height:16px;padding:0;margin:0;outline:none;flex-shrink:0;transition:color .12s ease">×</button>
+      <span id="calc-ext-header-val" style="font:12px monospace;color:${theme.muted};line-height:1.2"></span>
+      <button id="calc-ext-close" style="display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:${theme.muted};cursor:pointer;font:20px/1 monospace;width:16px;height:16px;padding:0;margin:0;outline:none;flex-shrink:0;transition:color .12s ease;position:relative;top:-2px">×</button>
     </div>
     <div id="calc-ext-sel-wrap" style="position:relative" data-bwignore="true">
-      <div id="calc-ext-sel-btn" tabindex="0" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:${theme.surface};border:1px solid ${theme.border};border-radius:4px;padding:5px 8px;cursor:pointer;box-sizing:border-box;outline:none;user-select:none">
-        <span id="calc-ext-sel-text" style="color:${theme.muted};font:12px sans-serif">— Select crypto —</span>
-        <span style="color:${theme.muted};font:10px;margin-left:6px">▼</span>
+      <div id="calc-ext-sel-btn" tabindex="0" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:${theme.surface};border:1px solid ${theme.border};border-radius:4px;padding:5px 8px;cursor:pointer;box-sizing:border-box;outline:none;user-select:none;transition:border-color .12s ease,background .12s ease">
+        <span id="calc-ext-sel-text" style="color:${theme.muted};font:12px sans-serif;cursor:pointer">— Select currency —</span>
+        <span style="color:${theme.muted};font:10px;margin-left:6px;cursor:pointer">▼</span>
       </div>
       <div id="calc-ext-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:${theme.dropdownBg};border:1px solid ${theme.border};border-radius:6px;z-index:10;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,${theme.name === 'dark' ? '0.7' : '0.15'})">
-        <input id="calc-ext-search" type="search" name="calc-ext-crypto-search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore="true" data-form-type="other" placeholder="Search..." style="width:100%;padding:7px 8px;background:${theme.inputBg};color:${theme.text};border:none;border-bottom:1px solid ${theme.border};font:12px sans-serif;outline:none;box-sizing:border-box" />
+        <input id="calc-ext-search" type="search" name="calc-ext-crypto-search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore="true" data-form-type="other" placeholder="Search..." style="width:100%;padding:7px 8px;background:${theme.inputBg};color:${theme.text};border:none;border-bottom:1px solid ${theme.border};font:12px sans-serif;outline:none;box-sizing:border-box;cursor:text;transition:background .12s ease" />
         <div id="calc-ext-list" style="max-height:180px;overflow-y:auto"></div>
       </div>
     </div>
@@ -166,6 +178,7 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
   });
 
   document.body.appendChild(popupEl);
+  popupEl.querySelector('#calc-ext-header-val').textContent = `${fmtVal} ${parsed.currency}`;
 
   const closeBtn = popupEl.querySelector('#calc-ext-close');
   closeBtn.onclick = () => {
@@ -185,6 +198,27 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
   let dropdownOpen = false;
   let highlightIdx = 0;
   let lastAmount = null;
+
+  btn.onmouseenter = () => {
+    btn.style.borderColor = theme.accent;
+    btn.style.background = theme.hover;
+  };
+  btn.onmouseleave = () => {
+    if (dropdownOpen) return;
+    btn.style.borderColor = theme.border;
+    btn.style.background = theme.surface;
+  };
+
+  search.onmouseenter = () => { search.style.background = theme.hover; };
+  search.onmouseleave = () => {
+    if (document.activeElement === search) return;
+    search.style.background = theme.inputBg;
+  };
+  search.onfocus = () => { search.style.background = theme.hover; };
+  search.onblur = () => {
+    search.style.background = theme.inputBg;
+    restoreSelection(savedRange);
+  };
 
   copyBtn.onclick = (e) => {
     e.stopPropagation();
@@ -221,22 +255,37 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
       ? targets.filter(c => c.name.toUpperCase().includes(q) || c.symbol.includes(q))
       : targets;
 
-    list.innerHTML = filtered.map(c => {
-      const sel = c.id === selectedId;
-      return `<div data-id="${c.id}" style="padding:5px 8px;cursor:pointer;font:12px sans-serif;display:flex;justify-content:space-between;border-bottom:1px solid ${theme.name === 'dark' ? '#1a1a2e' : '#eee'}">
-        <span>${c.name}</span>
-        <span style="color:${theme.muted}">${c.symbol}</span>
-      </div>`;
-    }).join('');
+    const borderColor = theme.name === 'dark' ? '#1a1a2e' : '#eee';
+    list.replaceChildren();
+    filtered.forEach((c) => {
+      const row = document.createElement('div');
+      row.dataset.id = c.id;
+      Object.assign(row.style, {
+        padding: '5px 8px',
+        cursor: 'pointer',
+        font: '12px sans-serif',
+        display: 'flex',
+        justifyContent: 'space-between',
+        borderBottom: `1px solid ${borderColor}`,
+      });
 
-    highlightIdx = 0;
-    list.querySelectorAll('div').forEach((el) => {
-      el.onclick = () => selectCrypto(el.dataset.id);
-      el.onmouseenter = () => {
-        highlightIdx = Array.from(list.children).indexOf(el);
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = c.name;
+
+      const symSpan = document.createElement('span');
+      symSpan.textContent = c.symbol;
+      symSpan.style.color = theme.muted;
+
+      row.append(nameSpan, symSpan);
+      row.onclick = () => selectCrypto(c.id);
+      row.onmouseenter = () => {
+        highlightIdx = Array.from(list.children).indexOf(row);
         updateHighlight();
       };
+      list.appendChild(row);
     });
+
+    highlightIdx = 0;
     updateHighlight();
   }
 
@@ -247,6 +296,7 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
     textSpan.style.color = theme.text;
     closeDropdown();
     updateConversion();
+    restoreSelection(savedRange);
   }
 
   function updateConversion() {
@@ -303,17 +353,20 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
     }
   }
 
-  function openDropdown() {
+  function openDropdown(autoFocus = true) {
     selectedId = '';
-    textSpan.textContent = '— Select crypto —';
+    textSpan.textContent = '— Select currency —';
     textSpan.style.color = theme.muted;
     search.value = '';
     updateConversion();
     dropdownOpen = true;
     dropdown.style.display = 'block';
+    btn.style.borderColor = theme.accent;
+    btn.style.background = theme.hover;
     renderList('');
     positionDropdown();
-    // readonly briefly so Bitwarden doesn't attach its overlay on focus
+    if (!autoFocus) return;
+    // readonly briefly so pass manager doesn't attach its overlay on focus
     search.setAttribute('readonly', 'readonly');
     search.focus();
     requestAnimationFrame(() => {
@@ -324,6 +377,8 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
   function closeDropdown() {
     dropdownOpen = false;
     dropdown.style.display = 'none';
+    btn.style.borderColor = theme.border;
+    btn.style.background = theme.surface;
   }
 
   btn.onclick = (e) => {
@@ -350,9 +405,16 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
       e.preventDefault();
       if (items[highlightIdx]) items[highlightIdx].click();
     } else if (e.key === 'Escape') {
-      closeDropdown(); btn.focus();
+      closeDropdown();
+      restoreSelection(savedRange);
     }
   };
+
+  // Keep page text selected while interacting with the popup (except real inputs)
+  popupEl.addEventListener('mousedown', (e) => {
+    if (e.target.closest('input, textarea, [contenteditable]')) return;
+    e.preventDefault();
+  });
 
   popupEl.addEventListener('click', (e) => {
     if (dropdownOpen && !e.target.closest('#calc-ext-dropdown') && !e.target.closest('#calc-ext-sel-btn')) {
@@ -360,5 +422,5 @@ function showPopup(x, y, parsed, cryptoList, fxRates) {
     }
   });
 
-  openDropdown();
+  openDropdown(true);
 }

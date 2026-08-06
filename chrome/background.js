@@ -39,9 +39,4 @@ chrome.action.onClicked.addListener(async () => {
   chrome.action.setTitle({ title: next ? 'CoinFlick: ON — click to disable' : 'CoinFlick: OFF — click to enable' });
 
   if (next) await fetchPrices();
-
-  const tabs = await chrome.tabs.query({});
-  for (const tab of tabs) {
-    chrome.tabs.sendMessage(tab.id, { type: 'toggle', isActive: next }).catch(() => {});
-  }
 });
