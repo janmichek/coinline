@@ -3,7 +3,7 @@
   "name": "CoinFlick",
   "short_name": "CoinFlick",
   "version": "1.0.0",
-  "description": "Inline crypto value converter — select any number on a page and flick it into crypto. Live rates for fiat and top coins.",
+  "description": "Inline crypto value converter — select any number on a page and flick it into crypto. Live rates for USD and top coins.",
   "permissions": ["storage"],
   "host_permissions": [
     "https://api.coingecko.com/*",
