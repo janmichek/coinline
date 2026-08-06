@@ -20,7 +20,7 @@ async function fetchPrices() {
       lastUpdated: Date.now(),
     });
   } catch (err) {
-    console.error('CoinFlick: failed to fetch prices', err);
+    console.error('CoinLine: failed to fetch prices', err);
   }
 }
 
@@ -36,7 +36,7 @@ chrome.action.onClicked.addListener(async () => {
   await chrome.storage.local.set({ calcActive: next });
   chrome.action.setBadgeText({ text: next ? 'ON' : '' });
   chrome.action.setBadgeBackgroundColor({ color: '#00ff88' });
-  chrome.action.setTitle({ title: next ? 'CoinFlick: ON — click to disable' : 'CoinFlick: OFF — click to enable' });
+  chrome.action.setTitle({ title: next ? 'CoinLine: ON — click to disable' : 'CoinLine: OFF — click to enable' });
 
   if (next) await fetchPrices();
 });

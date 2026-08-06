@@ -1,9 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
   <rect width="48" height="48" rx="10" fill="#1a1a2e"/>
-  <g fill="none" stroke="#00ff88" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M9 16h23"/>
-    <path d="M25 10l7 6-7 6"/>
-    <path d="M39 32H16"/>
-    <path d="M23 26l-7 6 7 6"/>
-  </g>
+  <!-- text baseline -->
+  <path d="M8 34h32" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+  <!-- selection highlight -->
+  <rect x="10" y="12" width="28" height="20" rx="4" fill="#00ff88" opacity="0.22"/>
+  <!-- coin in selection -->
+  <circle cx="24" cy="22" r="7" fill="none" stroke="#00ff88" stroke-width="2.8"/>
+  <circle cx="24" cy="22" r="2.2" fill="#00ff88"/>
+  <!-- caret -->
+  <path d="M10 10v24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/>
 </svg>
