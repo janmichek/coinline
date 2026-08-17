@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "CoinLine",
+  "short_name": "CoinLine",
+  "version": "1.0.0",
+  "description": "Inline crypto value converter — select any number on a page and convert it to crypto. Live rates for USD and top coins.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "coinline@coinline",
+      "strict_min_version": "109.0"
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://api.coingecko.com/*",
+    "https://api.exchangerate-api.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_title": "CoinLine: OFF — click to enable",
+    "default_icon": "icon.svg"
+  },
+  "icons": {
+    "48": "icon.svg"
+  }
+}
