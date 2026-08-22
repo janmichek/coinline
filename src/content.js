@@ -162,16 +162,15 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
     <div id="calc-ext-conversion" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;min-height:20px;font:bold 13px monospace;color:${theme.result}">
       <span id="calc-ext-conv-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <div style="display:flex;align-items:center;flex-shrink:0;margin-left:6px;gap:4px">
-        <button id="calc-ext-copy" style="display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;font-size:11px;padding:1px 6px;outline:none;transition:color .12s ease,border-color .12s ease">Copy</button>
         <button id="calc-ext-chart" title="Open chart" style="display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true" style="display:block;pointer-events:none">
-            <path d="M1 14h14"/>
-            <path d="M4 14V8M4 6v2"/>
-            <rect x="2.6" y="8" width="2.8" height="6" rx="0.4"/>
-            <path d="M8 14V5M8 3v2"/>
-            <rect x="6.6" y="5" width="2.8" height="9" rx="0.4"/>
-            <path d="M12 14V7M12 5v2"/>
-            <rect x="10.6" y="7" width="2.8" height="7" rx="0.4"/>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none">
+            <path d="M2 12l4-4 2.5 2.5L14 3"/>
+          </svg>
+        </button>
+        <button id="calc-ext-copy" title="Copy" style="display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none">
+            <rect x="5.5" y="5.5" width="8" height="8" rx="1.2"/>
+            <path d="M3.5 10.5V3.5a1 1 0 011-1h7"/>
           </svg>
         </button>
       </div>
@@ -216,7 +215,11 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
   let lastAmount = null;
 
   function cryptoTvSymbol(ticker) {
-    return `CRYPTO-${ticker}USD`;
+    return `BINANCE:${ticker}USDT`;
+  }
+
+  function tvChartUrl(symbol) {
+    return `https://www.tradingview.com/chart/?${new URLSearchParams({ symbol })}`;
   }
 
   function tradingViewUrl() {
@@ -226,25 +229,23 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
     const targetCoin = selectedId === 'usd' ? null : cryptoList.find(c => c.id === selectedId);
     if (selectedId !== 'usd' && !targetCoin) return null;
 
-    const base = 'https://www.tradingview.com/chart/';
-
     if (sourceCrypto && targetCoin) {
       if (sourceCrypto === targetCoin.symbol) {
-        return `${base}?symbol=${cryptoTvSymbol(sourceCrypto)}`;
+        return tvChartUrl(cryptoTvSymbol(sourceCrypto));
       }
-      return `${base}?symbol=${cryptoTvSymbol(sourceCrypto)}&comparison=${cryptoTvSymbol(targetCoin.symbol)}`;
+      return tvChartUrl(`${cryptoTvSymbol(sourceCrypto)}/${cryptoTvSymbol(targetCoin.symbol)}`);
     }
 
     if (sourceCrypto && selectedId === 'usd') {
-      return `${base}?symbol=${cryptoTvSymbol(sourceCrypto)}`;
+      return tvChartUrl(cryptoTvSymbol(sourceCrypto));
     }
 
     if (!sourceCrypto && targetCoin) {
-      return `${base}?symbol=CRYPTO-${targetCoin.symbol}${parsed.currency}`;
+      return tvChartUrl(cryptoTvSymbol(targetCoin.symbol));
     }
 
     if (!sourceCrypto && selectedId === 'usd' && parsed.currency !== 'USD') {
-      return `${base}?symbol=${parsed.currency}USD`;
+      return tvChartUrl(`${parsed.currency}USD`);
     }
 
     return null;
@@ -287,13 +288,13 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
     restoreSelection(savedRange);
   };
 
+  const copyIconHtml = copyBtn.innerHTML;
   copyBtn.onclick = (e) => {
     e.stopPropagation();
     if (lastAmount === null) return;
     copyToClipboard(lastAmount);
-    const old = copyBtn.textContent;
-    copyBtn.textContent = '✓';
-    setTimeout(() => { copyBtn.textContent = old; }, 1200);
+    copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+    setTimeout(() => { copyBtn.innerHTML = copyIconHtml; }, 1200);
   };
   bindActionHover(copyBtn);
 
