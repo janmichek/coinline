@@ -6,6 +6,8 @@ A passion project — something I kept wishing existed, then built.
 
 Works in Chrome and Firefox. Off by default.
 
+[![Watch the demo](https://img.youtube.com/vi/sh6_dw-zVXM/maxresdefault.jpg)](https://youtu.be/sh6_dw-zVXM)
+
 ## Features
 
 - Click the toolbar icon to turn it **ON** (badge) or off again. The state is saved and restored after a browser restart.
