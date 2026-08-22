@@ -1,4 +1,4 @@
-[coinline-demo.webm](https://github.com/user-attachments/assets/235cc6ab-5011-4cd6-81bc-c04137066ed2)# CoinLine
+# CoinLine
 
 CoinLine is a simple, effective **inline exchange**: highlight a number on any page and convert it to crypto or fiat, right where you are. No extra tab, no copy-paste into a calculator.
 

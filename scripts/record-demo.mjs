@@ -208,41 +208,38 @@ async function recordClip({ name, colorScheme, play }) {
   return dest;
 }
 
-async function usdToBtc(page, mouse) {
-  await dragSelect(page, mouse, '#usd-amount');
-  await page.locator('#calc-ext-popup').waitFor({ state: 'visible' });
-  await sleep(280);
-  await typeQuick(page, mouse, page.locator('#calc-ext-search'), 'btc');
-  await sleep(180);
-  await clickLocator(page, mouse, page.locator('#calc-ext-list [data-id="bitcoin"]'));
-  await page.locator('#calc-ext-conv-text').waitFor();
-  await sleep(450);
-  await clickLocator(page, mouse, page.locator('#calc-ext-copy'));
-  await sleep(350);
+async function dismissPopup(page, mouse) {
+  const close = page.locator('#calc-ext-close');
+  if (await close.isVisible().catch(() => false)) {
+    await clickLocator(page, mouse, close);
+    await sleep(200);
+  }
 }
 
-async function eurToEth(page, mouse) {
-  await dragSelect(page, mouse, '#eur-amount');
+async function convertTo(page, mouse, selector, searchTerm, targetId, { pause = 450, copy = false } = {}) {
+  const target = page.locator(selector);
+  await target.scrollIntoViewIfNeeded();
+  await sleep(120);
+  await dragSelect(page, mouse, selector);
   await page.locator('#calc-ext-popup').waitFor({ state: 'visible' });
   await sleep(260);
-  await typeQuick(page, mouse, page.locator('#calc-ext-search'), 'eth');
+  await typeQuick(page, mouse, page.locator('#calc-ext-search'), searchTerm);
   await sleep(160);
-  await clickLocator(page, mouse, page.locator('#calc-ext-list [data-id="ethereum"]'));
+  await clickLocator(page, mouse, page.locator(`#calc-ext-list [data-id="${targetId}"]`));
   await page.locator('#calc-ext-conv-text').waitFor();
-  await sleep(500);
+  await sleep(pause);
+  if (copy) {
+    await clickLocator(page, mouse, page.locator('#calc-ext-copy'));
+    await sleep(280);
+  }
+  await dismissPopup(page, mouse);
 }
 
-async function btcToUsd(page, mouse) {
-  await dragSelect(page, mouse, '#btc-amount');
-  await page.locator('#calc-ext-popup').waitFor({ state: 'visible' });
-  await sleep(260);
-  await typeQuick(page, mouse, page.locator('#calc-ext-search'), 'usd');
-  await sleep(160);
-  await clickLocator(page, mouse, page.locator('#calc-ext-list [data-id="usd"]'));
-  await page.locator('#calc-ext-conv-text').waitFor();
-  await sleep(400);
-  await clickLocator(page, mouse, page.locator('#calc-ext-copy'));
-  await sleep(350);
+async function fullDemo(page, mouse) {
+  await convertTo(page, mouse, '#usd-amount', 'btc', 'bitcoin', { copy: true });
+  await convertTo(page, mouse, '#eur-amount', 'eth', 'ethereum');
+  await convertTo(page, mouse, '#btc-amount', 'usd', 'usd', { copy: true });
+  await convertTo(page, mouse, '#xrp-amount', 'eth', 'ethereum', { pause: 550 });
 }
 
 async function main() {
@@ -253,9 +250,7 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
 
   const clips = [
-    { name: 'coinline-usd-to-btc', colorScheme: 'light', play: usdToBtc },
-    { name: 'coinline-dark-eur-to-eth', colorScheme: 'dark', play: eurToEth },
-    { name: 'coinline-btc-to-usd', colorScheme: 'light', play: btcToUsd },
+    { name: 'coinline-demo', colorScheme: 'light', play: fullDemo },
   ];
 
   for (const clip of clips) {
