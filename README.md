@@ -12,7 +12,9 @@ Works in Chrome and Firefox. Off by default.
 - Select a number on a page — `$1,250`, `€80`, `0.5 BTC`, and similar. A number with no currency sign is treated as USD.
 - Recognizes common fiat symbols and names (USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY) and crypto tickers from the live list.
 - Searchable dropdown to convert into USD or any of the listed coins.
-- Copy the converted amount, or open a TradingView chart.
+- Follows the system light or dark theme.
+- Copy the converted amount to the clipboard.
+- Open a TradingView chart for the selected currency pair.
 
 Prices are **refreshed when you switch the extension ON** by clicking the icon.
 
@@ -27,9 +29,9 @@ Prices are **refreshed when you switch the extension ON** by clicking the icon.
 
 Want another currency, a new feature, or just to say hi? Open an issue on [github.com/janmichek/coinline](https://github.com/janmichek/coinline).
 
-## Develop
+## Development
 
-Requires [Node.js](https://nodejs.org/). No `npm install` — the build is a single script.
+Requires [Node.js](https://nodejs.org/). The extension build itself is a single script and does not need extra dependencies.
 
 ```bash
 npm run build          # dist/chrome and dist/firefox
@@ -43,6 +45,22 @@ Load the **built** folder, not `src/` or the repo root (`manifest.json` is writt
 - **Firefox:** `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `dist/firefox/manifest.json`
 
 After changing `src/`, rebuild and reload the extension. Content-script changes also need a page refresh.
+
+## Test
+
+Chrome end-to-end tests load the unpacked `dist/chrome` build in Playwright's Chromium. Prices are stubbed so the suite does not call CoinGecko or ExchangeRate-API.
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+```bash
+npm run test:headed    # watch the browser
+```
+
+## Export
 
 Store-ready zips:
 
