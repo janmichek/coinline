@@ -26,19 +26,33 @@ async function fetchPrices() {
   }
 }
 
-ext.runtime.onInstalled.addListener(fetchPrices);
+function applyActionState(active) {
+  ext.action.setBadgeText({ text: active ? 'ON' : '' });
+  ext.action.setBadgeBackgroundColor({ color: '#00ff88' });
+  ext.action.setTitle({
+    title: active ? 'CoinLine: ON — click to disable' : 'CoinLine: OFF — click to enable',
+  });
+}
 
-ext.storage.local.get('calcActive').then((r) => {
-  if (r.calcActive === undefined) ext.storage.local.set({ calcActive: false });
-});
+async function restoreActionState() {
+  const { calcActive } = await ext.storage.local.get('calcActive');
+  if (calcActive === undefined) {
+    await ext.storage.local.set({ calcActive: false });
+    applyActionState(false);
+    return;
+  }
+  applyActionState(!!calcActive);
+}
+
+ext.runtime.onInstalled.addListener(fetchPrices);
+ext.runtime.onStartup.addListener(restoreActionState);
+restoreActionState();
 
 ext.action.onClicked.addListener(async () => {
   const { calcActive } = await ext.storage.local.get('calcActive');
   const next = !calcActive;
   await ext.storage.local.set({ calcActive: next });
-  ext.action.setBadgeText({ text: next ? 'ON' : '' });
-  ext.action.setBadgeBackgroundColor({ color: '#00ff88' });
-  ext.action.setTitle({ title: next ? 'CoinLine: ON — click to disable' : 'CoinLine: OFF — click to enable' });
+  applyActionState(next);
 
   if (next) await fetchPrices();
 });
