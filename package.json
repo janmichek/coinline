@@ -9,6 +9,11 @@
     "build:firefox": "node scripts/build.mjs firefox",
     "export": "node scripts/build.mjs --zip",
     "export:chrome": "node scripts/build.mjs chrome --zip",
-    "export:firefox": "node scripts/build.mjs firefox --zip"
+    "export:firefox": "node scripts/build.mjs firefox --zip",
+    "test": "node scripts/build.mjs chrome && playwright test",
+    "test:headed": "node scripts/build.mjs chrome && playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }
