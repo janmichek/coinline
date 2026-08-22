@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Saturday price check</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --paper: #fffdf8;
+      --ink: #1b1814;
+      --muted: #6f675e;
+      --rule: #e6dfd2;
+      --accent: #0055cc;
+      --chip: #eef2ff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c1018;
+        --paper: #141822;
+        --ink: #ece7de;
+        --muted: #9b948a;
+        --rule: #2a3140;
+        --accent: #00ff88;
+        --chip: #16213e;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font: 24px/1.55 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 10px 12px 12px;
+    }
+    article {
+      width: 100%;
+      max-width: none;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 40px 46px 44px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.08);
+    }
+    .kicker {
+      margin: 0 0 14px;
+      font: 600 12px/1 system-ui, sans-serif;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 42px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .meta {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font: 14px/1.4 system-ui, sans-serif;
+    }
+    p { margin: 0 0 20px; }
+    .amount {
+      font: 600 28px/1.2 "SF Mono", ui-monospace, Menlo, monospace;
+      color: var(--accent);
+      background: var(--chip);
+      padding: 2px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    footer {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font: 13px/1.5 system-ui, sans-serif;
+    }
+    *, *::before, *::after { cursor: none !important; }
+    #demo-pointer {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      z-index: 2147483647;
+      pointer-events: none;
+      transform-origin: 5px 5px;
+      transition: transform 70ms ease-out;
+    }
+    #demo-pointer.clicking { transform: scale(0.86); }
+  </style>
+</head>
+<body>
+  <div id="demo-pointer" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 32 32"
+         style="display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))">
+      <path fill="#fff" stroke="#111" stroke-width="1.4"
+            d="M7 5l2.4 16.2 3.8-3.4 3.6 8.2 2.8-1.2-3.6-8.2 5.6-.5z"/>
+    </svg>
+  </div>
+  <script>
+    (() => {
+      const pointer = document.getElementById('demo-pointer');
+      window.__demoPointerMove = (x, y) => {
+        pointer.style.left = `${x}px`;
+        pointer.style.top = `${y}px`;
+      };
+      document.addEventListener('mousedown', () => pointer.classList.add('clicking'));
+      document.addEventListener('mouseup', () => pointer.classList.remove('clicking'));
+    })();
+  </script>
+  <article>
+    <p class="kicker">CoinLine · Market note</p>
+    <h1>A Saturday price check</h1>
+    <p class="meta">August 22 · No extra tab, no calculator</p>
+    <p>The listing sat at <span class="amount" id="usd-amount">$1,250</span> this morning — enough to notice, not enough to chase.</p>
+    <p>Across the water the same idea was marked <span class="amount" id="eur-amount">€80</span>.</p>
+    <p>Someone in the thread still holds <span class="amount" id="btc-amount">0.5 BTC</span> from an older cycle.</p>
+    <footer>Highlight any amount. Convert it where it is.</footer>
+  </article>
+</body>
+</html>

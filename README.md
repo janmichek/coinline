@@ -6,6 +6,8 @@ A passion project — something I kept wishing existed, then built.
 
 Works in Chrome and Firefox. Off by default.
 
+[Play on YouTube](https://youtu.be/sh6_dw-zVXM)
+
 [![Watch the demo](https://img.youtube.com/vi/sh6_dw-zVXM/maxresdefault.jpg)](https://youtu.be/sh6_dw-zVXM)
 
 ## Features

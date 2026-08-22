@@ -11,7 +11,8 @@
     "export:chrome": "node scripts/build.mjs chrome --zip",
     "export:firefox": "node scripts/build.mjs firefox --zip",
     "test": "node scripts/build.mjs chrome && playwright test",
-    "test:headed": "node scripts/build.mjs chrome && playwright test --headed"
+    "test:headed": "node scripts/build.mjs chrome && playwright test --headed",
+    "record:demo": "node scripts/build.mjs chrome && node scripts/record-demo.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0"
