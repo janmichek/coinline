@@ -44,15 +44,41 @@ async function restoreActionState() {
   applyActionState(!!calcActive);
 }
 
-ext.runtime.onInstalled.addListener(fetchPrices);
-ext.runtime.onStartup.addListener(restoreActionState);
+async function injectToTab(tabId) {
+  try {
+    await ext.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
+  } catch (e) {
+    // ignore chrome://, edge://, extension pages
+  }
+}
+
+ext.runtime.onInstalled.addListener(async (details) => {
+  await fetchPrices();
+  if (details.reason === 'install') {
+    await ext.storage.local.set({ calcActive: true });
+    applyActionState(true);
+  }
+});
+ext.runtime.onStartup.addListener(async () => {
+  await restoreActionState();
+  await fetchPrices();
+});
 restoreActionState();
 
-ext.action.onClicked.addListener(async () => {
+ext.action.onClicked.addListener(async (tab) => {
   const { calcActive } = await ext.storage.local.get('calcActive');
   const next = !calcActive;
   await ext.storage.local.set({ calcActive: next });
   applyActionState(next);
 
-  if (next) await fetchPrices();
+  if (next) {
+    await fetchPrices();
+    if (tab?.id) await injectToTab(tab.id);
+  }
+});
+
+// When user switches tabs while ON, inject into that tab (activeTab grants temp access on click, so this succeeds only after recent click — otherwise silently fails, which is expected for least-privilege)
+ext.tabs?.onActivated?.addListener(async ({ tabId }) => {
+  const { calcActive } = await ext.storage.local.get('calcActive');
+  if (calcActive) await injectToTab(tabId);
 });

@@ -2,15 +2,18 @@
   "manifest_version": 3,
   "name": "CoinLine",
   "short_name": "CoinLine",
-  "version": "1.0.0",
-  "description": "Inline crypto value converter — select any number on a page and convert it to crypto. Live rates for USD and top coins.",
+  "version": "1.0.1",
+  "description": "Highlight any price on a webpage to instantly see its value in USD or many cryptocurrencies",
   "browser_specific_settings": {
     "gecko": {
       "id": "coinline@coinline",
-      "strict_min_version": "109.0"
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms"],
   "host_permissions": [
     "https://api.coingecko.com/*",
     "https://api.exchangerate-api.com/*"

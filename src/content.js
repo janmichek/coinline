@@ -1,5 +1,8 @@
 const ext = globalThis.browser ?? globalThis.chrome;
 
+if (globalThis.__coinlineInjected) { /* prevent double-inject on activeTab reinjection */ } else {
+globalThis.__coinlineInjected = true;
+
 let isActive = false;
 let popupEl = null;
 
@@ -132,6 +135,48 @@ function restoreSelection(range) {
   } catch (_) {}
 }
 
+function createSvgIcon(paths, attrs) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  Object.entries({ width: '12', height: '12', viewBox: '0 0 16 16', fill: 'none', stroke: 'currentColor', 'aria-hidden': 'true', ...attrs }).forEach(([k,v]) => svg.setAttribute(k, v));
+  svg.style.cssText = 'display:block;pointer-events:none';
+  for (const p of paths) {
+    const el = document.createElementNS(NS, p.tag || 'path');
+    Object.entries(p.attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    svg.appendChild(el);
+  }
+  return svg;
+}
+function copySvg() { return createSvgIcon([{ attrs: { d: 'M3.5 8.5l3 3 6-7' } }], { 'stroke-width': '1.6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); }
+function makeCopyIconSvg() { return createSvgIcon([{ tag: 'rect', attrs: { x: '5.5', y: '5.5', width: '8', height: '8', rx: '1.2' } }, { attrs: { d: 'M3.5 10.5V3.5a1 1 0 011-1h7' } }], { 'stroke-width': '1.4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); }
+function makeChartIconSvg() { return createSvgIcon([{ attrs: { d: 'M2 12l4-4 2.5 2.5L14 3' } }], { 'stroke-width': '1.6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); }
+function setButtonIcon(btn, svgFactory) { btn.replaceChildren(svgFactory()); }
+
+function buildPopupDOM(root, theme) {
+  const header = document.createElement('div'); header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;min-height:0';
+  const headerVal = document.createElement('span'); headerVal.id = 'calc-ext-header-val'; headerVal.style.cssText = `font:12px monospace;color:${theme.muted};line-height:1.2`;
+  const closeBtn = document.createElement('button'); closeBtn.id = 'calc-ext-close'; closeBtn.textContent = '×'; closeBtn.style.cssText = `display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:${theme.muted};cursor:pointer;font:20px/1 monospace;width:16px;height:16px;padding:0;margin:0;outline:none;flex-shrink:0;transition:color .12s ease;position:relative;top:-2px`;
+  header.append(headerVal, closeBtn);
+  const selWrap = document.createElement('div'); selWrap.id = 'calc-ext-sel-wrap'; selWrap.style.position = 'relative'; selWrap.setAttribute('data-bwignore','true');
+  const selBtn = document.createElement('div'); selBtn.id = 'calc-ext-sel-btn'; selBtn.tabIndex = 0; selBtn.style.cssText = `display:flex;align-items:center;justify-content:space-between;width:100%;background:${theme.surface};border:1px solid ${theme.border};border-radius:4px;padding:5px 8px;cursor:pointer;box-sizing:border-box;outline:none;user-select:none;transition:border-color .12s ease,background .12s ease`;
+  const selText = document.createElement('span'); selText.id = 'calc-ext-sel-text'; selText.textContent = '— Select currency —'; selText.style.cssText = `color:${theme.muted};font:12px sans-serif;cursor:pointer`;
+  const selArrow = document.createElement('span'); selArrow.textContent = '▼'; selArrow.style.cssText = `color:${theme.muted};font:10px;margin-left:6px;cursor:pointer`;
+  selBtn.append(selText, selArrow);
+  const dropdown = document.createElement('div'); dropdown.id = 'calc-ext-dropdown'; dropdown.style.cssText = `display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:${theme.dropdownBg};border:1px solid ${theme.border};border-radius:6px;z-index:10;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,${theme.name === 'dark' ? '0.7' : '0.15'})`;
+  const search = document.createElement('input'); search.id = 'calc-ext-search'; search.type = 'search'; search.name = 'calc-ext-crypto-search'; search.autocomplete = 'off'; search.setAttribute('autocorrect','off'); search.setAttribute('autocapitalize','off'); search.spellcheck = false; search.setAttribute('data-lpignore','true'); search.setAttribute('data-1p-ignore',''); search.setAttribute('data-bwignore','true'); search.setAttribute('data-form-type','other'); search.placeholder = 'Search...'; search.style.cssText = `width:100%;padding:7px 8px;background:${theme.inputBg};color:${theme.text};border:none;border-bottom:1px solid ${theme.border};font:12px sans-serif;outline:none;box-sizing:border-box;cursor:text;transition:background .12s ease`;
+  const list = document.createElement('div'); list.id = 'calc-ext-list'; list.style.cssText = 'max-height:180px;overflow-y:auto';
+  dropdown.append(search, list); selWrap.append(selBtn, dropdown);
+  const conv = document.createElement('div'); conv.id = 'calc-ext-conversion'; conv.style.cssText = `margin-top:6px;display:flex;justify-content:space-between;align-items:center;min-height:20px;font:bold 13px monospace;color:${theme.result}`;
+  const convText = document.createElement('span'); convText.id = 'calc-ext-conv-text'; convText.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  const actions = document.createElement('div'); actions.style.cssText = 'display:flex;align-items:center;flex-shrink:0;margin-left:6px;gap:4px';
+  const chartBtn = document.createElement('button'); chartBtn.id = 'calc-ext-chart'; chartBtn.title = 'Open chart'; chartBtn.style.cssText = `display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease`;
+  chartBtn.appendChild(makeChartIconSvg());
+  const copyBtn = document.createElement('button'); copyBtn.id = 'calc-ext-copy'; copyBtn.title = 'Copy'; copyBtn.style.cssText = `display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease`;
+  copyBtn.appendChild(makeCopyIconSvg());
+  actions.append(chartBtn, copyBtn); conv.append(convText, actions);
+  root.append(header, selWrap, conv);
+}
+
 function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
   if (popupEl) popupEl.remove();
 
@@ -144,38 +189,8 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
     : parsed.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   popupEl.setAttribute('data-bwignore', 'true');
-  popupEl.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;min-height:0">
-      <span id="calc-ext-header-val" style="font:12px monospace;color:${theme.muted};line-height:1.2"></span>
-      <button id="calc-ext-close" style="display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:${theme.muted};cursor:pointer;font:20px/1 monospace;width:16px;height:16px;padding:0;margin:0;outline:none;flex-shrink:0;transition:color .12s ease;position:relative;top:-2px">×</button>
-    </div>
-    <div id="calc-ext-sel-wrap" style="position:relative" data-bwignore="true">
-      <div id="calc-ext-sel-btn" tabindex="0" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:${theme.surface};border:1px solid ${theme.border};border-radius:4px;padding:5px 8px;cursor:pointer;box-sizing:border-box;outline:none;user-select:none;transition:border-color .12s ease,background .12s ease">
-        <span id="calc-ext-sel-text" style="color:${theme.muted};font:12px sans-serif;cursor:pointer">— Select currency —</span>
-        <span style="color:${theme.muted};font:10px;margin-left:6px;cursor:pointer">▼</span>
-      </div>
-      <div id="calc-ext-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:${theme.dropdownBg};border:1px solid ${theme.border};border-radius:6px;z-index:10;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,${theme.name === 'dark' ? '0.7' : '0.15'})">
-        <input id="calc-ext-search" type="search" name="calc-ext-crypto-search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore="true" data-form-type="other" placeholder="Search..." style="width:100%;padding:7px 8px;background:${theme.inputBg};color:${theme.text};border:none;border-bottom:1px solid ${theme.border};font:12px sans-serif;outline:none;box-sizing:border-box;cursor:text;transition:background .12s ease" />
-        <div id="calc-ext-list" style="max-height:180px;overflow-y:auto"></div>
-      </div>
-    </div>
-    <div id="calc-ext-conversion" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;min-height:20px;font:bold 13px monospace;color:${theme.result}">
-      <span id="calc-ext-conv-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      <div style="display:flex;align-items:center;flex-shrink:0;margin-left:6px;gap:4px">
-        <button id="calc-ext-chart" title="Open chart" style="display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none">
-            <path d="M2 12l4-4 2.5 2.5L14 3"/>
-          </svg>
-        </button>
-        <button id="calc-ext-copy" title="Copy" style="display:none;background:none;border:1px solid ${theme.border};color:${theme.muted};cursor:pointer;border-radius:4px;padding:1px 5px;outline:none;line-height:0;transition:color .12s ease,border-color .12s ease">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none">
-            <rect x="5.5" y="5.5" width="8" height="8" rx="1.2"/>
-            <path d="M3.5 10.5V3.5a1 1 0 011-1h7"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  `;
+  // Build popup DOM safely without innerHTML (avoids AMO unsafe-assignment warning)
+  buildPopupDOM(popupEl, theme);
 
   const w = 250, h = 140;
   let left = Math.min(x, window.innerWidth - w - 10);
@@ -288,13 +303,12 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
     restoreSelection(savedRange);
   };
 
-  const copyIconHtml = copyBtn.innerHTML;
   copyBtn.onclick = (e) => {
     e.stopPropagation();
     if (lastAmount === null) return;
     copyToClipboard(lastAmount);
-    copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none"><path d="M3.5 8.5l3 3 6-7"/></svg>';
-    setTimeout(() => { copyBtn.innerHTML = copyIconHtml; }, 1200);
+    setButtonIcon(copyBtn, copySvg);
+    setTimeout(() => { setButtonIcon(copyBtn, makeCopyIconSvg); }, 1200);
   };
   bindActionHover(copyBtn);
 
@@ -493,3 +507,4 @@ function showPopup(x, y, parsed, cryptoList, fxRates, savedRange) {
 
   openDropdown(true);
 }
+} // __coinlineInjected guard
