@@ -4,8 +4,12 @@ CoinLine is a simple, effective inline exchange calculator: highlight a number o
 
 A passion project — something I kept wishing existed, then built.
 
+## Download Extension
+
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/dafllilkihbickomgiohcjhabcdfeckf)](https://chromewebstore.google.com/detail/coinline/dafllilkihbickomgiohcjhabcdfeckf)
 [![Firefox Add-on](https://img.shields.io/amo/v/coinline)](https://addons.mozilla.org/en-US/firefox/addon/coinline/)
+
+## Demo
 
 [coinline-demo.webm](https://github.com/user-attachments/assets/86245910-15b5-4bfb-b943-c4a377b53b07)
 
