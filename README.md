@@ -1,6 +1,6 @@
 # CoinLine
 
-CoinLine is a simple, effective inline exchange calculator: highlight a number on any page and convert it to crypto or fiat, right where you are. No extra tab, no copy-paste into a calculator.
+CoinLine is a browser extension- a simple, effective inline exchange calculator: highlight a number on any page and convert it to crypto or fiat, right where you are. No extra tab, no copy-paste into a calculator.
 
 A passion project — something I kept wishing existed, then built.
 
